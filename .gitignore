@@ -13,7 +13,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Package locks (optional - usually keep them)
-# package-lock.json
+package-lock.json
 
 # ------------------------------
 # Environment variables (IMPORTANT)
