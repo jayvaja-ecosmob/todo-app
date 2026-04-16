@@ -111,7 +111,7 @@ export default function App() {
   return (
     <div className="app-card">
       <div className="header">
-        <span className="title">My tasks by JAY</span>
+        <span className="title">My tasks JAY</span>
         <span className="count-badge">{activeCount === 1 ? '1 left' : `${activeCount} left`}</span>
       </div>
 
