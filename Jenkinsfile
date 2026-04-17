@@ -97,7 +97,7 @@ pipeline {
         )]) {
 
             sh """
-            rm -rf k8s-repo-app
+            rm -rf k8s-todo-app
 
             git clone https://$GIT_TOKEN@github.com/jayvaja-ecosmob/k8s-todo-app.git
             cd k8s-todo-app
