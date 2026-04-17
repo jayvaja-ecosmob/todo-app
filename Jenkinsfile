@@ -26,31 +26,31 @@ pipeline {
         // -------------------------
         // SONARQUBE
         // -------------------------
-        // stage('SonarQube Analysis') {
-        //     environment {
-        //         scannerHome = tool 'sonar-scanner'
-        //     }
-        //     steps {
-        //         withSonarQubeEnv('sonarqube') {
-        //             dir('backend') {
-        //                 sh '''
-        //                 npm install
-        //                 npx sonar-scanner \
-        //                 -Dsonar.projectKey=todo-backend \
-        //                 -Dsonar.sources=.
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube Analysis') {
+            environment {
+                scannerHome = tool 'sonar-scanner'
+            }
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    dir('backend') {
+                        sh '''
+                        npm install
+                        npx sonar-scanner \
+                        -Dsonar.projectKey=todo-backend \
+                        -Dsonar.sources=.
+                        '''
+                    }
+                }
+            }
+        }
 
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 5, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         // -------------------------
         // BUILD IMAGES
