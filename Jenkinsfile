@@ -32,14 +32,16 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('sonarqube') {
-                    dir('backend') {
-                        sh '''
-                        npm install
-                        npx sonar-scanner \
+                    sh """
+                    ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=todo-backend \
-                        -Dsonar.sources=.
-                        '''
-                    }
+                        -Dsonar.sources=./backend
+                    """
+                    sh """
+                    ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=todo-frontend \
+                        -Dsonar.sources=./frontend
+                    """
                 }
             }
         }
