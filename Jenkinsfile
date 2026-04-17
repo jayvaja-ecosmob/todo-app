@@ -1,13 +1,17 @@
 pipeline {
     agent any
 
-    environment {
-        BACKEND_IMAGE = "jayv1161/todo-app-backend"
-        FRONTEND_IMAGE = "jayv1161/todo-app-frontend"
-        VERSION = "1.0"
-        TAG = "v${VERSION}.${BUILD_NUMBER}"
+    options {
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+    }
 
-        K8S_REPO = "https://github.com/jayvaja-ecosmob/k8s-todo-app.git"
+    environment {
+        BACKEND_IMAGE  = "jayv1161/todo-app-backend"
+        FRONTEND_IMAGE = "jayv1161/todo-app-frontend"
+        VERSION        = "1.0"
+        TAG            = "v${VERSION}.${BUILD_NUMBER}"
     }
 
     stages {
@@ -15,12 +19,12 @@ pipeline {
         stage('Clone App Repo') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/jayvaja-ecosmob/todo-app.git'
+                    url: 'https://github.com/jayvaja-ecosmob/todo-app.git'
             }
         }
 
         // -------------------------
-        // SONAR (backend example)
+        // SONARQUBE
         // -------------------------
         // stage('SonarQube Analysis') {
         //     environment {
@@ -53,17 +57,13 @@ pipeline {
         // -------------------------
         stage('Build Backend Image') {
             steps {
-                sh """
-                docker build -t ${BACKEND_IMAGE}:${TAG} ./backend
-                """
+                sh "docker build -t ${BACKEND_IMAGE}:${TAG} ./backend"
             }
         }
 
         stage('Build Frontend Image') {
             steps {
-                sh """
-                docker build -t ${FRONTEND_IMAGE}:${TAG} ./frontend
-                """
+                sh "docker build -t ${FRONTEND_IMAGE}:${TAG} ./frontend"
             }
         }
 
@@ -77,12 +77,20 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh """
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push ${BACKEND_IMAGE}:${TAG}
-                    docker push ${FRONTEND_IMAGE}:${TAG}
-                    """
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${BACKEND_IMAGE}:${TAG}"
+                    sh "docker push ${FRONTEND_IMAGE}:${TAG}"
                 }
+            }
+        }
+
+        // -------------------------
+        // CLEANUP LOCAL IMAGES
+        // -------------------------
+        stage('Cleanup Local Images') {
+            steps {
+                sh "docker rmi ${BACKEND_IMAGE}:${TAG} || true"
+                sh "docker rmi ${FRONTEND_IMAGE}:${TAG} || true"
             }
         }
 
@@ -90,34 +98,43 @@ pipeline {
         // UPDATE K8S REPO
         // -------------------------
         stage('Update K8s Repo') {
-    steps {
-        withCredentials([string(
-            credentialsId: 'github-token',
-            variable: 'GIT_TOKEN'
-        )]) {
+            steps {
+                withCredentials([string(
+                    credentialsId: 'github-token',
+                    variable: 'GIT_TOKEN'
+                )]) {
+                    sh 'rm -rf k8s-todo-app'
+                    sh 'git clone https://$GIT_TOKEN@github.com/jayvaja-ecosmob/k8s-todo-app.git'
 
-            sh """
-            rm -rf k8s-todo-app
-
-            git clone https://$GIT_TOKEN@github.com/jayvaja-ecosmob/k8s-todo-app.git
-            cd k8s-todo-app
-
-            # Update backend image
-            sed -i 's|image: .*backend.*|image: ${BACKEND_IMAGE}:${TAG}|g' backend-deployment.yaml
-
-
-            # Update frontend image
-            sed -i 's|image: .*frontend.*|image: ${FRONTEND_IMAGE}:${TAG}|g' frontend-deployment.yaml
-
-            git config user.email "jay.vaja@ecosmob.com"
-            git config user.name "jayvaja-ecosmob"
-
-            git add .
-            git commit -m "Update images to ${TAG}"
-            git push origin main
-            """
+                    dir('k8s-todo-app') {
+                        sh "sed -i 's|image: .*backend.*|image: ${BACKEND_IMAGE}:${TAG}|g' backend-deployment.yaml"
+                        sh "sed -i 's|image: .*frontend.*|image: ${FRONTEND_IMAGE}:${TAG}|g' frontend-deployment.yaml"
+                        sh """
+                        git config user.email "jay.vaja@ecosmob.com"
+                        git config user.name "jayvaja-ecosmob"
+                        git add .
+                        git commit -m "Update images to ${TAG}" || echo "Nothing to commit"
+                        git push origin main
+                        """
+                    }
+                }
+            }
         }
     }
-}
+
+    // -------------------------
+    // POST ACTIONS
+    // -------------------------
+    post {
+        always {
+            sh 'docker logout || true'
+            cleanWs()
+        }
+        success {
+            echo "✅ Pipeline succeeded! Image ${TAG} deployed."
+        }
+        failure {
+            echo "❌ Pipeline failed for ${TAG}. Check logs above."
+        }
     }
 }
