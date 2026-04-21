@@ -1,3 +1,15 @@
+def sendGoogleChatNotification(String message) {
+    withCredentials([string(credentialsId: 'gchat-webhook', variable: 'WEBHOOK_URL')]) {
+    sh """
+    curl -X POST -H 'Content-Type: application/json' \
+    -d '{
+          "text": "${message}"
+        }' \
+    "$WEBHOOK_URL"
+    """
+    }
+}
+
 pipeline {
     agent any
 
@@ -121,18 +133,6 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-
-    def sendGoogleChatNotification(String message) {
-        withCredentials([string(credentialsId: 'gchat-webhook', variable: 'WEBHOOK_URL')]) {
-        sh """
-        curl -X POST -H 'Content-Type: application/json' \
-        -d '{
-              "text": "${message}"
-            }' \
-        "$WEBHOOK_URL"
-        """
         }
     }
 
