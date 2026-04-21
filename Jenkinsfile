@@ -1,11 +1,11 @@
 pipeline {
     agent any
 
-    options {
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
-    }
+    // options {
+    //     disableConcurrentBuilds()
+    //     buildDiscarder(logRotator(numToKeepStr: '10'))
+    //     timeout(time: 30, unit: 'MINUTES')
+    // }
 
     environment {
         BACKEND_IMAGE  = "jayv1161/todo-app-backend"
@@ -124,6 +124,18 @@ pipeline {
         }
     }
 
+    def sendGoogleChatNotification(String message) {
+        withCredentials([string(credentialsId: 'gchat-webhook', variable: 'WEBHOOK_URL')]) {
+        sh """
+        curl -X POST -H 'Content-Type: application/json' \
+        -d '{
+              "text": "${message}"
+            }' \
+        "$WEBHOOK_URL"
+        """
+        }
+    }
+
     // -------------------------
     // POST ACTIONS
     // -------------------------
@@ -132,10 +144,18 @@ pipeline {
             sh 'docker logout || true'
             cleanWs()
         }
+
         success {
+            script {
+                sendGoogleChatNotification("✅ SUCCESS: Build ${env.BUILD_NUMBER} (${TAG}) completed successfully.")
+            }
             echo "✅ Pipeline succeeded! Image ${TAG} deployed."
         }
+
         failure {
+            script {
+                sendGoogleChatNotification("❌ FAILURE: Build ${env.BUILD_NUMBER} failed. Check Jenkins logs.")
+            }
             echo "❌ Pipeline failed for ${TAG}. Check logs above."
         }
     }
