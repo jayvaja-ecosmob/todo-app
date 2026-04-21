@@ -3,6 +3,7 @@
 # ------------------------------
 .DS_Store
 Thumbs.db
+.history/
 
 # ------------------------------
 # Node.js (Frontend + Backend)

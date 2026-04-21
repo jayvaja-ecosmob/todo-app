@@ -6,7 +6,7 @@
 |-----------|-----------------------------------|
 | Frontend  | React 18 + Vite + nginx           |
 | Backend   | Node.js 20 + Express + mysql2     |
-| Database  | MySQL 8.4                         |
+| Database  | MySQL 8.0                         |
 | Container | Docker (multi-stage builds)       |
 | Orchestration | Kubernetes + nginx Ingress    |
 
