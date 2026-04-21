@@ -13,11 +13,11 @@ def sendGoogleChatNotification(String message) {
 pipeline {
     agent any
 
-    options {
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
-    }
+    // options {
+    //     disableConcurrentBuilds()
+    //     buildDiscarder(logRotator(numToKeepStr: '10'))
+    //     timeout(time: 30, unit: 'MINUTES')
+    // }
 
     environment {
         BACKEND_IMAGE  = "jayv1161/todo-app-backend"
