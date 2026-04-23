@@ -52,11 +52,6 @@ logs/
 docker-compose.override.yml
 
 # ------------------------------
-# Kubernetes (sensitive files)
-# ------------------------------
-kubernetes/secret.yaml
-
-# ------------------------------
 # IDE / Editor
 # ------------------------------
 .vscode/
